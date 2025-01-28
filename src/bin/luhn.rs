@@ -26,8 +26,8 @@ pub fn is_valid(code: &str) -> bool {
     //     .chars()
     //     .rev()
     //     .enumerate()
-    //     .map(|(i, c)| match (i + 1) % 2 {
-    //         0 => match c.to_digit(10).unwrap() {
+    //     .map(|(i, c)| match i % 2 {
+    //         1 => match c.to_digit(10).unwrap() {
     //             x if x < 5 => x * 2,
     //             x => x * 2 - 9,
     //         },
