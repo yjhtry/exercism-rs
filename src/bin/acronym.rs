@@ -1,26 +1,15 @@
 pub fn abbreviate(phrase: &str) -> String {
     phrase
-        .chars()
-        .fold(
-            (String::new(), true, '\0'),
-            |(mut s, toggle, last), c| match c {
-                '-' | ' ' | '_' => (s, true, '\0'),
-                c if c.is_uppercase() => {
-                    if toggle || (last != '\0' && last.is_lowercase()) {
-                        s.push(c);
-                    }
-
-                    (s, false, c)
-                }
-                c => {
-                    if toggle {
-                        s.push_str(c.to_uppercase().to_string().as_str());
-                    }
-                    (s, false, c)
-                }
-            },
-        )
-        .0
+        .split([' ', '_', '-'])
+        .flat_map(|w| {
+            w.chars().take(1).chain(
+                w.chars()
+                    .skip_while(|c| c.is_uppercase())
+                    .filter(|c| c.is_uppercase()),
+            )
+        })
+        .collect::<String>()
+        .to_uppercase()
 }
 
 fn main() {}
