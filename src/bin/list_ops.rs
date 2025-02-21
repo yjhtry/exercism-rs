@@ -1,0 +1,266 @@
+/// Yields each item of a and then each item of b
+pub fn append<T, I>(a: I, b: I) -> impl Iterator<Item = T>
+where
+    I: Iterator<Item = T>,
+{
+    a.chain(b)
+}
+
+/// Combines all items in all nested iterators inside into one flattened iterator
+pub fn concat<I, NI, T>(nested_iter: I) -> impl Iterator<Item = T>
+where
+    NI: Iterator<Item = T>,
+    I: Iterator<Item = NI>,
+{
+    nested_iter.flatten()
+}
+
+/// Returns an iterator of all items in iter for which `predicate(item)` is true
+pub fn filter<I, T, F>(iter: I, predicate: F) -> impl Iterator<Item = T>
+where
+    I: Iterator<Item = T>,
+    F: Fn(&T) -> bool,
+{
+    iter.filter(predicate)
+}
+
+pub fn length<I: Iterator<Item = T>, T>(iter: I) -> usize {
+    iter.count()
+}
+
+/// Returns an iterator of the results of applying `function(item)` on all iter items
+pub fn map<I, F, T, U>(iter: I, function: F) -> impl Iterator<Item = U>
+where
+    I: Iterator<Item = T>,
+    F: Fn(T) -> U,
+{
+    iter.map(function)
+}
+
+pub fn foldl<I, F, T, U>(iter: I, initial: U, function: F) -> U
+where
+    I: Iterator<Item = T>,
+    F: Fn(U, T) -> U,
+{
+    iter.fold(initial, function)
+}
+
+pub fn foldr<I, F, T, U>(iter: I, initial: U, function: F) -> U
+where
+    I: DoubleEndedIterator<Item = T>,
+    F: Fn(U, T) -> U,
+{
+    iter.rfold(initial, function)
+}
+
+/// Returns an iterator with all the original items, but in reverse order
+pub fn reverse<I: DoubleEndedIterator<Item = T>, T>(iter: I) -> impl Iterator<Item = T> {
+    iter.rev()
+}
+fn main() {}
+
+#[cfg(test)]
+mod test {
+    mod append {
+        use crate::*;
+        #[test]
+        fn empty_lists() {
+            let list1 = vec![0i32; 0].into_iter();
+            let list2 = vec![0i32; 0].into_iter();
+            let output = append(list1, list2);
+            let expected = vec![];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn list_to_empty_list() {
+            let list1 = vec![0i32; 0].into_iter();
+            let list2 = vec![1, 2, 3, 4].into_iter();
+            let output = append(list1, list2);
+            let expected = vec![1, 2, 3, 4];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn empty_list_to_list() {
+            let list1 = vec![1, 2, 3, 4].into_iter();
+            let list2 = vec![0i32; 0].into_iter();
+            let output = append(list1, list2);
+            let expected = vec![1, 2, 3, 4];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn non_empty_lists() {
+            let list1 = vec![1, 2].into_iter();
+            let list2 = vec![2, 3, 4, 5].into_iter();
+            let output = append(list1, list2);
+            let expected = vec![1, 2, 2, 3, 4, 5];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+    }
+    #[allow(clippy::zero_repeat_side_effects)]
+    mod concat {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let lists = vec![vec![0i32; 0]; 0].into_iter().map(Vec::into_iter);
+            let output = concat(lists);
+            let expected = vec![];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn list_of_lists() {
+            let lists = vec![vec![1, 2], vec![3], vec![], vec![4, 5, 6]]
+                .into_iter()
+                .map(Vec::into_iter);
+            let output = concat(lists);
+            let expected = vec![1, 2, 3, 4, 5, 6];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn list_of_nested_lists() {
+            let lists = vec![vec![vec![1], vec![2]], vec![vec![3]], vec![vec![]], vec![
+                vec![4, 5, 6],
+            ]]
+            .into_iter()
+            .map(Vec::into_iter);
+            let output = concat(lists);
+            let expected = vec![vec![1], vec![2], vec![3], vec![], vec![4, 5, 6]];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+    }
+    mod filter {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let list = vec![0i32; 0].into_iter();
+            let output = filter(list, |x| x % 2 == 1);
+            let expected = vec![];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn non_empty_list() {
+            let list = vec![1, 2, 3, 5].into_iter();
+            let output = filter(list, |x| x % 2 == 1);
+            let expected = vec![1, 3, 5];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+    }
+    mod length {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let list = vec![0i32; 0].into_iter();
+            let output = length(list);
+            let expected = 0;
+            assert_eq!(output, expected);
+        }
+        #[test]
+        fn non_empty_list() {
+            let list = vec![1, 2, 3, 4].into_iter();
+            let output = length(list);
+            let expected = 4;
+            assert_eq!(output, expected);
+        }
+    }
+    mod map {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let list = vec![0i32; 0].into_iter();
+            let output = map(list, |x| x + 1);
+            let expected = vec![];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn non_empty_list() {
+            let list = vec![1, 3, 5, 7].into_iter();
+            let output = map(list, |x| x + 1);
+            let expected = vec![2, 4, 6, 8];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+    }
+    mod foldl {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let list = vec![0.0f64; 0].into_iter();
+            let initial = 2.0;
+            let output = foldl(list, initial, |acc, el| el * acc);
+            let expected = 2.0;
+            assert_eq!(output, expected);
+        }
+        #[test]
+        fn direction_independent_function_applied_to_non_empty_list() {
+            let list = vec![1.0, 2.0, 3.0, 4.0].into_iter();
+            let initial = 5.0;
+            let output = foldl(list, initial, |acc, el| el + acc);
+            let expected = 15.0;
+            assert_eq!(output, expected);
+        }
+        #[test]
+        fn direction_dependent_function_applied_to_non_empty_list() {
+            let list = vec![1.0, 2.0, 3.0, 4.0].into_iter();
+            let initial = 24.0;
+            let output = foldl(list, initial, |acc, el| el / acc);
+            let expected = 64.0;
+            assert_eq!(output, expected);
+        }
+    }
+    mod foldr {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let list = vec![0.0f64; 0].into_iter();
+            let initial = 2.0;
+            let output = foldr(list, initial, |acc, el| el * acc);
+            let expected = 2.0;
+            assert_eq!(output, expected);
+        }
+        #[test]
+        fn direction_independent_function_applied_to_non_empty_list() {
+            let list = vec![1.0, 2.0, 3.0, 4.0].into_iter();
+            let initial = 5.0;
+            let output = foldr(list, initial, |acc, el| el + acc);
+            let expected = 15.0;
+            assert_eq!(output, expected);
+        }
+        #[test]
+        fn direction_dependent_function_applied_to_non_empty_list() {
+            let list = vec![1.0, 2.0, 3.0, 4.0].into_iter();
+            let initial = 24.0;
+            let output = foldr(list, initial, |acc, el| el / acc);
+            let expected = 9.0;
+            assert_eq!(output, expected);
+        }
+    }
+    mod reverse {
+        use crate::*;
+        #[test]
+        fn empty_list() {
+            let list = vec![0i32; 0].into_iter();
+            let output = reverse(list);
+            let expected = vec![];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn non_empty_list() {
+            let list = vec![1, 3, 5, 7].into_iter();
+            let output = reverse(list);
+            let expected = vec![7, 5, 3, 1];
+            assert_eq!(output.collect::<Vec<_>>(), expected);
+        }
+        #[test]
+        fn list_of_lists_is_not_flattened() {
+            let list = vec![vec![1, 2], vec![3], vec![], vec![4, 5, 6]]
+                .into_iter()
+                .map(Vec::into_iter);
+            let output = reverse(list);
+            let expected = vec![vec![4, 5, 6], vec![], vec![3], vec![1, 2]];
+            assert_eq!(
+                output
+                    .map(|subiter| subiter.collect::<Vec<_>>())
+                    .collect::<Vec<_>>(),
+                expected
+            );
+        }
+    }
+}
