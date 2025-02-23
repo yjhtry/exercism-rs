@@ -1,3 +1,6 @@
+const NUMS: [&str; 10] = [
+    "Ten", "Nine", "Eight", "Seven", "Six", "Five", "Four", "Three", "Two", "One",
+];
 fn main() {
-    println!("{}", char::from(b'\0') as u8);
+    println!("{:?}", NUMS.into_iter().rev().collect::<Vec<&str>>());
 }
